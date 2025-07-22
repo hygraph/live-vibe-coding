@@ -8,6 +8,17 @@ export const typeDefs = `#graphql
     description: String
     createdAt: String!
     updatedAt: String!
+    comments: [Comment!]!
+  }
+
+  # Comment type representing a comment on a snippet
+  type Comment {
+    id: ID!
+    snippetId: ID!
+    author: String!
+    content: String!
+    createdAt: String!
+    updatedAt: String!
   }
 
   # Input types for mutations
@@ -25,6 +36,12 @@ export const typeDefs = `#graphql
     description: String
   }
 
+  input CreateCommentInput {
+    snippetId: ID!
+    author: String!
+    content: String!
+  }
+
   # Query operations
   type Query {
     # Get all snippets with optional search and language filtering
@@ -32,6 +49,9 @@ export const typeDefs = `#graphql
     
     # Get a single snippet by ID
     snippet(id: ID!): Snippet
+
+    # Get comments for a specific snippet
+    comments(snippetId: ID!): [Comment!]!
   }
 
   # Mutation operations
@@ -44,5 +64,11 @@ export const typeDefs = `#graphql
 
     # Delete a snippet
     deleteSnippet(id: ID!): Boolean
+
+    # Create a new comment
+    createComment(input: CreateCommentInput!): Comment
+
+    # Delete a comment
+    deleteComment(id: ID!): Boolean
   }
 `;

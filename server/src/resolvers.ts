@@ -10,6 +10,15 @@ interface Snippet {
   updatedAt: string;
 }
 
+interface Comment {
+  id: string;
+  snippetId: string;
+  author: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface CreateSnippetInput {
   title: string;
   language?: string;
@@ -22,6 +31,12 @@ interface UpdateSnippetInput {
   language?: string;
   code?: string;
   description?: string;
+}
+
+interface CreateCommentInput {
+  snippetId: string;
+  author: string;
+  content: string;
 }
 
 export const resolvers = {
@@ -60,6 +75,22 @@ export const resolvers = {
       const stmt = db.prepare('SELECT * FROM snippets WHERE id = ?');
       const result = stmt.get(id) as Snippet | undefined;
       return result || null;
+    },
+
+    comments: (_: any, { snippetId }: { snippetId: string }): Comment[] => {
+      const stmt = db.prepare(
+        'SELECT * FROM comments WHERE snippetId = ? ORDER BY createdAt ASC'
+      );
+      return stmt.all(snippetId) as Comment[];
+    },
+  },
+
+  Snippet: {
+    comments: (snippet: Snippet): Comment[] => {
+      const stmt = db.prepare(
+        'SELECT * FROM comments WHERE snippetId = ? ORDER BY createdAt ASC'
+      );
+      return stmt.all(snippet.id) as Comment[];
     },
   },
 
@@ -140,6 +171,35 @@ export const resolvers = {
 
     deleteSnippet: (_: any, { id }: { id: string }): boolean => {
       const stmt = db.prepare('DELETE FROM snippets WHERE id = ?');
+      const result = stmt.run(id);
+      return result.changes > 0;
+    },
+
+    createComment: (
+      _: any,
+      { input }: { input: CreateCommentInput }
+    ): Comment => {
+      const now = new Date().toISOString();
+      const stmt = db.prepare(`
+        INSERT INTO comments (snippetId, author, content, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+
+      const result = stmt.run(
+        input.snippetId,
+        input.author,
+        input.content,
+        now,
+        now
+      );
+
+      // Get the created comment
+      const getStmt = db.prepare('SELECT * FROM comments WHERE id = ?');
+      return getStmt.get(result.lastInsertRowid) as Comment;
+    },
+
+    deleteComment: (_: any, { id }: { id: string }): boolean => {
+      const stmt = db.prepare('DELETE FROM comments WHERE id = ?');
       const result = stmt.run(id);
       return result.changes > 0;
     },

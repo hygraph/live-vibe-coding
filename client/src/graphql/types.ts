@@ -7,6 +7,17 @@ export interface Snippet {
   description?: string;
   createdAt: string;
   updatedAt: string;
+  comments?: Comment[];
+}
+
+// Core Comment type
+export interface Comment {
+  id: string;
+  snippetId: string;
+  author: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Input types for mutations
@@ -24,6 +35,12 @@ export interface UpdateSnippetInput {
   description?: string;
 }
 
+export interface CreateCommentInput {
+  snippetId: string;
+  author: string;
+  content: string;
+}
+
 // Query variables types
 export interface GetSnippetsVariables {
   search?: string;
@@ -32,6 +49,10 @@ export interface GetSnippetsVariables {
 
 export interface GetSnippetVariables {
   id: string;
+}
+
+export interface GetCommentsVariables {
+  snippetId: string;
 }
 
 export interface CreateSnippetVariables {
@@ -47,6 +68,14 @@ export interface DeleteSnippetVariables {
   id: string;
 }
 
+export interface CreateCommentVariables {
+  input: CreateCommentInput;
+}
+
+export interface DeleteCommentVariables {
+  id: string;
+}
+
 // Query response types
 export interface GetSnippetsData {
   snippets: Snippet[];
@@ -54,6 +83,10 @@ export interface GetSnippetsData {
 
 export interface GetSnippetData {
   snippet: Snippet | null;
+}
+
+export interface GetCommentsData {
+  comments: Comment[];
 }
 
 export interface CreateSnippetData {
@@ -66,6 +99,14 @@ export interface UpdateSnippetData {
 
 export interface DeleteSnippetData {
   deleteSnippet: boolean;
+}
+
+export interface CreateCommentData {
+  createComment: Comment;
+}
+
+export interface DeleteCommentData {
+  deleteComment: boolean;
 }
 
 // Common language options for snippets

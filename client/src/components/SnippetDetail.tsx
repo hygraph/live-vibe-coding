@@ -8,6 +8,8 @@ import type {
   DeleteSnippetData,
   DeleteSnippetVariables,
 } from '../graphql/types';
+import CommentList from './CommentList';
+import CommentForm from './CommentForm';
 import '../styles/snippets.css';
 
 const SnippetDetail: React.FC = () => {
@@ -305,7 +307,7 @@ const SnippetDetail: React.FC = () => {
                       rx='2'
                       ry='2'
                     ></rect>
-                    <path d='M5,15H4a2,2,0,0,1-2-2V4A2,2,0,0,1,4,2H15a2,2,0,0,1,2,2V5'></path>
+                    <path d='M5,15H4a2,2,0,0,1-2,2V4A2,2,0,0,1,4,2H15a2,2,0,0,1,2,2V5'></path>
                   </svg>
                   Copy
                 </>
@@ -313,6 +315,14 @@ const SnippetDetail: React.FC = () => {
             </button>
           </div>
           <div className='code-block'>{snippet.code}</div>
+        </div>
+
+        <div className='comments-section'>
+          <CommentList
+            comments={snippet.comments || []}
+            snippetId={snippet.id}
+          />
+          <CommentForm snippetId={snippet.id} />
         </div>
       </div>
     </div>

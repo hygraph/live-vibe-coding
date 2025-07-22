@@ -20,6 +20,21 @@ const createTableSQL = `
   );
 `;
 
+// Ensure the `comments` table exists
+// Schema: id, snippetId, author, content, createdAt, updatedAt
+const createCommentsTableSQL = `
+  CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    snippetId INTEGER NOT NULL,
+    author TEXT NOT NULL,
+    content TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (snippetId) REFERENCES snippets (id) ON DELETE CASCADE
+  );
+`;
+
 db.exec(createTableSQL);
+db.exec(createCommentsTableSQL);
 
 export default db;
