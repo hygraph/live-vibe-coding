@@ -265,25 +265,25 @@
     gap: 0.75rem;
     align-items: stretch;
   }
-  
+
   .snippet-actions {
     justify-content: center;
   }
-  
+
   .snippet-detail-header,
   .snippet-detail-body {
     padding: 1.5rem;
   }
-  
+
   .snippet-detail-actions {
     justify-content: center;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
+
   .filter-group {
     grid-template-columns: 1fr;
   }
-} 
+}

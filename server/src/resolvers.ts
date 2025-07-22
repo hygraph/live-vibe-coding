@@ -26,7 +26,10 @@ interface UpdateSnippetInput {
 
 export const resolvers = {
   Query: {
-    snippets: (_: any, { search, language }: { search?: string; language?: string }): Snippet[] => {
+    snippets: (
+      _: any,
+      { search, language }: { search?: string; language?: string }
+    ): Snippet[] => {
       let query = 'SELECT * FROM snippets';
       const params: any[] = [];
       const conditions: string[] = [];
@@ -61,13 +64,16 @@ export const resolvers = {
   },
 
   Mutation: {
-    createSnippet: (_: any, { input }: { input: CreateSnippetInput }): Snippet => {
+    createSnippet: (
+      _: any,
+      { input }: { input: CreateSnippetInput }
+    ): Snippet => {
       const now = new Date().toISOString();
       const stmt = db.prepare(`
         INSERT INTO snippets (title, language, code, description, createdAt, updatedAt)
         VALUES (?, ?, ?, ?, ?, ?)
       `);
-      
+
       const result = stmt.run(
         input.title,
         input.language || null,
@@ -82,7 +88,10 @@ export const resolvers = {
       return getStmt.get(result.lastInsertRowid) as Snippet;
     },
 
-    updateSnippet: (_: any, { id, input }: { id: string; input: UpdateSnippetInput }): Snippet | null => {
+    updateSnippet: (
+      _: any,
+      { id, input }: { id: string; input: UpdateSnippetInput }
+    ): Snippet | null => {
       // Check if snippet exists
       const existsStmt = db.prepare('SELECT id FROM snippets WHERE id = ?');
       if (!existsStmt.get(id)) {
@@ -135,4 +144,4 @@ export const resolvers = {
       return result.changes > 0;
     },
   },
-}; 
+};

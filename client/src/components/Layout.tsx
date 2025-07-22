@@ -17,21 +17,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <Link to="/" className="logo">
+    <div className='app'>
+      <header className='header'>
+        <div className='header-content'>
+          <Link to='/' className='logo'>
             📝 Snippet Manager
           </Link>
-          <nav className="nav">
-            <Link 
-              to="/" 
+          <nav className='nav'>
+            <Link
+              to='/'
               className={`nav-link ${isActiveRoute('/') ? 'active' : ''}`}
             >
               All Snippets
             </Link>
-            <Link 
-              to="/new" 
+            <Link
+              to='/new'
               className={`nav-link ${isActiveRoute('/new') ? 'active' : ''}`}
             >
               + New Snippet
@@ -40,13 +40,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </header>
 
-      <main className="main">
-        <div className="container">
-          {children}
-        </div>
+      <main className='main'>
+        <div className='container'>{children}</div>
       </main>
     </div>
   );
 };
 
-export default Layout; 
+export default Layout;

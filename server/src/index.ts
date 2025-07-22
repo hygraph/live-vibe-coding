@@ -51,17 +51,27 @@ async function startServer() {
   });
 
   // Basic error handler
-  app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Unhandled error:', err);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-    });
-  });
+  app.use(
+    (
+      err: Error,
+      req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction
+    ) => {
+      console.error('Unhandled error:', err);
+      res.status(500).json({
+        error: 'Internal server error',
+        message:
+          process.env.NODE_ENV === 'development'
+            ? err.message
+            : 'Something went wrong',
+      });
+    }
+  );
 
   const PORT = process.env.PORT || 4000;
 
-  await new Promise<void>((resolve) =>
+  await new Promise<void>(resolve =>
     httpServer.listen({ port: PORT }, resolve)
   );
 
@@ -69,7 +79,7 @@ async function startServer() {
 }
 
 // Start the server
-startServer().catch((error) => {
+startServer().catch(error => {
   console.error('Failed to start server:', error);
   process.exit(1);
-}); 
+});

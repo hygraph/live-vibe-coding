@@ -97,7 +97,7 @@ export const PROGRAMMING_LANGUAGES = [
   'bash',
   'powershell',
   'dockerfile',
-  'other'
+  'other',
 ] as const;
 
-export type ProgrammingLanguage = typeof PROGRAMMING_LANGUAGES[number]; 
+export type ProgrammingLanguage = (typeof PROGRAMMING_LANGUAGES)[number];

@@ -45,4 +45,4 @@ export const typeDefs = `#graphql
     # Delete a snippet
     deleteSnippet(id: ID!): Boolean
   }
-`; 
+`;

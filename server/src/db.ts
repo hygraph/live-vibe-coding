@@ -22,4 +22,4 @@ const createTableSQL = `
 
 db.exec(createTableSQL);
 
-export default db; 
+export default db;
