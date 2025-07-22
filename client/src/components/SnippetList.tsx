@@ -8,6 +8,7 @@ import type {
   Snippet,
 } from '../graphql/types';
 import { PROGRAMMING_LANGUAGES } from '../graphql/types';
+import CodeBlock from './CodeBlock';
 import '../styles/snippets.css';
 
 interface SnippetListProps {
@@ -172,7 +173,13 @@ const SnippetList: React.FC<SnippetListProps> = ({ onSelectSnippet }) => {
                   <p className='snippet-description'>{snippet.description}</p>
                 )}
                 <div className='snippet-preview'>
-                  {truncateCode(snippet.code)}
+                  <CodeBlock
+                    code={truncateCode(snippet.code)}
+                    language={snippet.language}
+                    showLineNumbers={false}
+                    theme='dark'
+                    className='snippet-preview-code'
+                  />
                 </div>
               </div>
 

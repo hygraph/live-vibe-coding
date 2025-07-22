@@ -10,6 +10,7 @@ import type {
 } from '../graphql/types';
 import CommentList from './CommentList';
 import CommentForm from './CommentForm';
+import CodeBlock from './CodeBlock';
 import '../styles/snippets.css';
 
 const SnippetDetail: React.FC = () => {
@@ -314,7 +315,12 @@ const SnippetDetail: React.FC = () => {
               )}
             </button>
           </div>
-          <div className='code-block'>{snippet.code}</div>
+          <CodeBlock
+            code={snippet.code}
+            language={snippet.language}
+            showLineNumbers={true}
+            theme='dark'
+          />
         </div>
 
         <div className='comments-section'>
