@@ -88,6 +88,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ snippetId }) => {
             value={formData.author}
             onChange={handleInputChange}
             placeholder='Enter your name'
+            className='form-input'
             required
             disabled={loading}
           />
@@ -101,6 +102,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ snippetId }) => {
             value={formData.content}
             onChange={handleInputChange}
             placeholder='Write your comment here...'
+            className='form-textarea'
             rows={4}
             required
             disabled={loading}

@@ -18,8 +18,7 @@ export const SNIPPET_FRAGMENT = gql`
     id
     title
     language
-    code
-    description
+    content
     createdAt
     updatedAt
   }
@@ -32,8 +31,7 @@ export const SNIPPET_WITH_COMMENTS_FRAGMENT = gql`
     id
     title
     language
-    code
-    description
+    content
     createdAt
     updatedAt
     comments {

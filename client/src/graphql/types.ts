@@ -3,14 +3,13 @@ export interface Snippet {
   id: string;
   title: string;
   language?: string;
-  code: string;
-  description?: string;
+  content: string;
   createdAt: string;
   updatedAt: string;
   comments?: Comment[];
 }
 
-// Core Comment type
+// Comment type
 export interface Comment {
   id: string;
   snippetId: string;
@@ -24,15 +23,13 @@ export interface Comment {
 export interface CreateSnippetInput {
   title: string;
   language?: string;
-  code: string;
-  description?: string;
+  content: string;
 }
 
 export interface UpdateSnippetInput {
   title?: string;
   language?: string;
-  code?: string;
-  description?: string;
+  content?: string;
 }
 
 export interface CreateCommentInput {

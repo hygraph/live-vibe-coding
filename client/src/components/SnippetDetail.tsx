@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import { GET_SNIPPET, DELETE_SNIPPET, GET_SNIPPETS } from '../graphql/queries';
 import type {
   GetSnippetData,
@@ -10,8 +13,8 @@ import type {
 } from '../graphql/types';
 import CommentList from './CommentList';
 import CommentForm from './CommentForm';
-import CodeBlock from './CodeBlock';
 import '../styles/snippets.css';
+import 'highlight.js/styles/github-dark.css';
 
 const SnippetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,7 +32,7 @@ const SnippetDetail: React.FC = () => {
     skip: !id,
   });
 
-  const [deleteSnippet, { loading: deleting }] = useMutation<
+  const [deleteSnippet] = useMutation<
     DeleteSnippetData,
     DeleteSnippetVariables
   >(DELETE_SNIPPET, {
@@ -38,78 +41,49 @@ const SnippetDetail: React.FC = () => {
     },
     onError: error => {
       console.error('Error deleting snippet:', error);
-      alert('Error deleting snippet. Please try again.');
     },
     // Update cache to remove deleted snippet
-    update: cache => {
-      try {
-        const existingData = cache.readQuery<{ snippets: Array<unknown> }>({
-          query: GET_SNIPPETS,
-          variables: {},
-        });
-
-        if (existingData) {
-          cache.writeQuery({
+    update: (cache, { data }) => {
+      if (data?.deleteSnippet) {
+        try {
+          const existingData = cache.readQuery<{ snippets: Array<unknown> }>({
             query: GET_SNIPPETS,
             variables: {},
-            data: {
-              snippets: existingData.snippets.filter(
-                (snippet: any) => (snippet as any).id !== id
-              ),
-            },
           });
-        }
-      } catch {
-        // Query might not exist in cache, which is fine
-      }
 
-      // Remove the specific snippet from cache
-      cache.evict({
-        id: cache.identify({ __typename: 'Snippet', id }),
-      });
+          if (existingData) {
+            cache.writeQuery({
+              query: GET_SNIPPETS,
+              variables: {},
+              data: {
+                snippets: existingData.snippets.filter(
+                  (snippet: any) => snippet.id !== id
+                ),
+              },
+            });
+          }
+        } catch {
+          // Query might not exist in cache yet, which is fine
+        }
+      }
     },
   });
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const copyToClipboard = async () => {
+    if (!snippet?.content) return;
 
-  const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(snippet.content);
       setCopyStatus('copied');
       setTimeout(() => setCopyStatus('idle'), 2000);
-    } catch {
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
       setCopyStatus('error');
       setTimeout(() => setCopyStatus('idle'), 2000);
-
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        setCopyStatus('copied');
-        setTimeout(() => setCopyStatus('idle'), 2000);
-      } catch {
-        console.error('Failed to copy to clipboard');
-      }
-      document.body.removeChild(textArea);
     }
   };
 
-  const handleDeleteClick = () => {
-    setShowDeleteConfirm(true);
-  };
-
-  const handleDeleteConfirm = async () => {
+  const handleDelete = async () => {
     if (!id) return;
 
     try {
@@ -121,8 +95,14 @@ const SnippetDetail: React.FC = () => {
     }
   };
 
-  const handleDeleteCancel = () => {
-    setShowDeleteConfirm(false);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   if (loading) {
@@ -135,202 +115,107 @@ const SnippetDetail: React.FC = () => {
   }
 
   if (error) {
-    return (
-      <div className='error'>
-        Error loading snippet: {error.message}
-        <Link
-          to='/'
-          className='btn btn-secondary'
-          style={{ marginLeft: '1rem' }}
-        >
-          Back to List
-        </Link>
-      </div>
-    );
+    return <div className='error'>Error loading snippet: {error.message}</div>;
   }
 
   if (!data?.snippet) {
-    return (
-      <div className='error'>
-        Snippet not found
-        <Link
-          to='/'
-          className='btn btn-secondary'
-          style={{ marginLeft: '1rem' }}
-        >
-          Back to List
-        </Link>
-      </div>
-    );
+    return <div className='error'>Snippet not found</div>;
   }
 
-  const { snippet } = data;
+  const snippet = data.snippet;
 
   return (
     <div className='snippet-detail'>
-      <div className='snippet-detail-header'>
-        <h1 className='snippet-detail-title'>{snippet.title}</h1>
-
-        <div className='snippet-detail-meta'>
-          {snippet.language && (
-            <span className='snippet-language'>{snippet.language}</span>
-          )}
-          <span>Created {formatDate(snippet.createdAt)}</span>
-          <span>Updated {formatDate(snippet.updatedAt)}</span>
+      <div className='snippet-header'>
+        <div className='snippet-meta'>
+          <h1>{snippet.title}</h1>
+          <div className='snippet-info'>
+            {snippet.language && (
+              <span className='language-tag'>{snippet.language}</span>
+            )}
+            <span className='date'>
+              Created {formatDate(snippet.createdAt)}
+            </span>
+            {snippet.updatedAt !== snippet.createdAt && (
+              <span className='date'>
+                • Updated {formatDate(snippet.updatedAt)}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className='snippet-detail-actions'>
+        <div className='snippet-actions'>
           <button
-            className={`copy-button ${copyStatus === 'copied' ? 'copied' : ''}`}
-            onClick={() => copyToClipboard(snippet.code)}
-            disabled={false}
+            className='btn btn-secondary btn-sm'
+            onClick={copyToClipboard}
+            title='Copy content to clipboard'
           >
-            {copyStatus === 'copied' ? (
-              <>
-                <svg
-                  width='16'
-                  height='16'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                >
-                  <polyline points='20,6 9,17 4,12'></polyline>
-                </svg>
-                Copied!
-              </>
-            ) : (
-              <>
-                <svg
-                  width='16'
-                  height='16'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                >
-                  <rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect>
-                  <path d='M5,15H4a2,2,0,0,1-2-2V4A2,2,0,0,1,4,2H15a2,2,0,0,1,2,2V5'></path>
-                </svg>
-                Copy Code
-              </>
-            )}
+            {copyStatus === 'copied'
+              ? '✓ Copied!'
+              : copyStatus === 'error'
+                ? '✗ Error'
+                : 'Copy'}
           </button>
-
-          <Link to={`/edit/${snippet.id}`} className='btn btn-primary'>
-            <svg
-              width='16'
-              height='16'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-            >
-              <path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'></path>
-              <path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'></path>
-            </svg>
+          <Link to={`/edit/${snippet.id}`} className='btn btn-secondary btn-sm'>
             Edit
           </Link>
+          <button
+            className='btn btn-danger btn-sm'
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
 
-          {showDeleteConfirm ? (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <div className='snippet-content'>
+        <div className='markdown-content'>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+            components={{
+              code: ({ className, children, ...props }: any) => {
+                return (
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                );
+              },
+            }}
+          >
+            {snippet.content}
+          </ReactMarkdown>
+        </div>
+      </div>
+
+      <div className='comments-section'>
+        <h3>Comments ({snippet.comments?.length || 0})</h3>
+        <CommentForm snippetId={snippet.id} />
+        <CommentList comments={snippet.comments || []} snippetId={snippet.id} />
+      </div>
+
+      {showDeleteConfirm && (
+        <div className='modal-overlay'>
+          <div className='modal'>
+            <h3>Delete Snippet</h3>
+            <p>
+              Are you sure you want to delete "{snippet.title}"? This action
+              cannot be undone.
+            </p>
+            <div className='modal-actions'>
               <button
-                className='btn btn-danger btn-sm'
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-              >
-                {deleting ? 'Deleting...' : 'Confirm'}
-              </button>
-              <button
-                className='btn btn-secondary btn-sm'
-                onClick={handleDeleteCancel}
-                disabled={deleting}
+                className='btn btn-secondary'
+                onClick={() => setShowDeleteConfirm(false)}
               >
                 Cancel
               </button>
+              <button className='btn btn-danger' onClick={handleDelete}>
+                Delete
+              </button>
             </div>
-          ) : (
-            <button className='btn btn-danger' onClick={handleDeleteClick}>
-              <svg
-                width='16'
-                height='16'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-              >
-                <polyline points='3,6 5,6 21,6'></polyline>
-                <path d='M19,6V20a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6'></path>
-              </svg>
-              Delete
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className='snippet-detail-body'>
-        {snippet.description && (
-          <div className='snippet-detail-description'>
-            {snippet.description}
           </div>
-        )}
-
-        <div className='code-section'>
-          <div className='code-header'>
-            <h4>Code</h4>
-            <button
-              className={`copy-button ${copyStatus === 'copied' ? 'copied' : ''}`}
-              onClick={() => copyToClipboard(snippet.code)}
-            >
-              {copyStatus === 'copied' ? (
-                <>
-                  <svg
-                    width='14'
-                    height='14'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                  >
-                    <polyline points='20,6 9,17 4,12'></polyline>
-                  </svg>
-                  Copied
-                </>
-              ) : (
-                <>
-                  <svg
-                    width='14'
-                    height='14'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                  >
-                    <rect
-                      x='9'
-                      y='9'
-                      width='13'
-                      height='13'
-                      rx='2'
-                      ry='2'
-                    ></rect>
-                    <path d='M5,15H4a2,2,0,0,1-2,2V4A2,2,0,0,1,4,2H15a2,2,0,0,1,2,2V5'></path>
-                  </svg>
-                  Copy
-                </>
-              )}
-            </button>
-          </div>
-          <CodeBlock
-            code={snippet.code}
-            language={snippet.language}
-            showLineNumbers={true}
-            theme='dark'
-          />
         </div>
-
-        <div className='comments-section'>
-          <CommentList
-            comments={snippet.comments || []}
-            snippetId={snippet.id}
-          />
-          <CommentForm snippetId={snippet.id} />
-        </div>
-      </div>
+      )}
     </div>
   );
 };

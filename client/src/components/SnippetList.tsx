@@ -46,9 +46,53 @@ const SnippetList: React.FC<SnippetListProps> = ({ onSelectSnippet }) => {
     }
   };
 
-  const truncateCode = (code: string, maxLength: number = 200) => {
-    if (code.length <= maxLength) return code;
-    return code.substring(0, maxLength) + '...';
+  const extractCodeBlock = (content: string) => {
+    // Extract first code block with language
+    const codeBlockMatch = content.match(/```(\w+)?\n([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      return {
+        language: codeBlockMatch[1] || 'text',
+        code: codeBlockMatch[2].trim(),
+      };
+    }
+    return null;
+  };
+
+  const truncateContent = (content: string, maxLength: number = 200) => {
+    // Remove markdown formatting for text preview
+    const plainText = content
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/#{1,6}\s+/g, '')
+      .replace(/\n+/g, ' ')
+      .trim();
+
+    if (plainText.length <= maxLength) return plainText;
+    return plainText.substring(0, maxLength) + '...';
+  };
+
+  const renderPreview = (content: string) => {
+    const codeBlock = extractCodeBlock(content);
+    const textPreview = truncateContent(content, 100);
+
+    return (
+      <div className='snippet-preview'>
+        {textPreview && <p className='snippet-description'>{textPreview}</p>}
+        {codeBlock && (
+          <div className='snippet-code-preview'>
+            <CodeBlock
+              code={codeBlock.code}
+              language={codeBlock.language}
+              showLineNumbers={false}
+              theme='dark'
+              className='preview-code'
+            />
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (loading) {
@@ -78,80 +122,57 @@ const SnippetList: React.FC<SnippetListProps> = ({ onSelectSnippet }) => {
   const snippets = data?.snippets || [];
 
   return (
-    <div>
-      {/* Search and Filters */}
-      <div className='search-filters'>
-        <div className='search-group'>
-          <label htmlFor='search' className='form-label'>
-            Search snippets
-          </label>
-          <div className='search-input'>
-            <svg
-              className='search-icon'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-              />
-            </svg>
-            <input
-              id='search'
-              type='text'
-              placeholder='Search by title or code...'
-              className='form-input'
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className='filter-group'>
-          <div className='form-group'>
-            <label htmlFor='language' className='form-label'>
-              Filter by language
-            </label>
-            <select
-              id='language'
-              className='form-select'
-              value={languageFilter}
-              onChange={e => setLanguageFilter(e.target.value)}
-            >
-              <option value=''>All languages</option>
-              {PROGRAMMING_LANGUAGES.map(lang => (
-                <option key={lang} value={lang}>
-                  {lang.charAt(0).toUpperCase() + lang.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+    <div className='snippet-list'>
+      <div className='snippet-list-header'>
+        <h2>Code Snippets</h2>
+        <div className='header-actions'>
+          <Link to='/new' className='btn btn-primary'>
+            + Create New Snippet
+          </Link>
         </div>
       </div>
 
-      {/* Results count */}
-      <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-        {snippets.length} snippet{snippets.length !== 1 ? 's' : ''} found
+      <div className='snippet-list-filters'>
+        <div className='search-input'>
+          <input
+            type='text'
+            placeholder='Search snippets...'
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className='form-input'
+          />
+        </div>
+
+        <div className='language-filter'>
+          <select
+            value={languageFilter}
+            onChange={e => setLanguageFilter(e.target.value)}
+            className='form-select'
+          >
+            <option value=''>All Languages</option>
+            {PROGRAMMING_LANGUAGES.map(lang => (
+              <option key={lang} value={lang}>
+                {lang.charAt(0).toUpperCase() + lang.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Snippet List */}
       {snippets.length === 0 ? (
         <div className='empty-state'>
           <h3>No snippets found</h3>
           <p>
             {search || languageFilter
-              ? 'Try adjusting your search or filter criteria.'
-              : 'Get started by creating your first code snippet!'}
+              ? 'Try adjusting your search filters.'
+              : 'Create your first snippet to get started!'}
           </p>
           <Link to='/new' className='btn btn-primary'>
-            Create First Snippet
+            Create Snippet
           </Link>
         </div>
       ) : (
-        <div className='snippet-list'>
+        <div className='snippet-grid'>
           {snippets.map(snippet => (
             <div
               key={snippet.id}
@@ -159,55 +180,26 @@ const SnippetList: React.FC<SnippetListProps> = ({ onSelectSnippet }) => {
               onClick={() => handleSnippetClick(snippet)}
             >
               <div className='snippet-card-header'>
-                <h3 className='snippet-card-title'>{snippet.title}</h3>
-                <div className='snippet-card-meta'>
-                  {snippet.language && (
-                    <span className='snippet-language'>{snippet.language}</span>
-                  )}
-                  <span>Updated {formatDate(snippet.updatedAt)}</span>
-                </div>
+                <h3>
+                  <Link to={`/snippet/${snippet.id}`}>{snippet.title}</Link>
+                </h3>
+                {snippet.language && (
+                  <span className='language-tag'>{snippet.language}</span>
+                )}
               </div>
 
-              <div className='snippet-card-body'>
-                {snippet.description && (
-                  <p className='snippet-description'>{snippet.description}</p>
-                )}
-                <div className='snippet-preview'>
-                  <CodeBlock
-                    code={truncateCode(snippet.code)}
-                    language={snippet.language}
-                    showLineNumbers={false}
-                    theme='dark'
-                    className='snippet-preview-code'
-                  />
-                </div>
+              <div className='snippet-card-content'>
+                {renderPreview(snippet.content)}
               </div>
 
               <div className='snippet-card-footer'>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--text-secondary)',
-                  }}
+                <span className='date'>{formatDate(snippet.createdAt)}</span>
+                <Link
+                  to={`/snippet/${snippet.id}`}
+                  className='btn btn-secondary btn-sm'
                 >
-                  Created {formatDate(snippet.createdAt)}
-                </span>
-                <div className='snippet-actions'>
-                  <Link
-                    to={`/snippet/${snippet.id}`}
-                    className='btn btn-secondary btn-sm'
-                    onClick={e => e.stopPropagation()}
-                  >
-                    View
-                  </Link>
-                  <Link
-                    to={`/edit/${snippet.id}`}
-                    className='btn btn-primary btn-sm'
-                    onClick={e => e.stopPropagation()}
-                  >
-                    Edit
-                  </Link>
-                </div>
+                  View
+                </Link>
               </div>
             </div>
           ))}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useParams } from 'react-router-dom';
+import MDEditor from '@uiw/react-md-editor';
 import {
   CREATE_SNIPPET,
   UPDATE_SNIPPET,
@@ -31,8 +32,7 @@ const SnippetForm: React.FC<SnippetFormProps> = ({ mode = 'create' }) => {
   const [formData, setFormData] = useState<CreateSnippetInput>({
     title: '',
     language: '',
-    code: '',
-    description: '',
+    content: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -48,8 +48,7 @@ const SnippetForm: React.FC<SnippetFormProps> = ({ mode = 'create' }) => {
         setFormData({
           title: data.snippet.title,
           language: data.snippet.language || '',
-          code: data.snippet.code,
-          description: data.snippet.description || '',
+          content: data.snippet.content,
         });
       }
     },
@@ -111,8 +110,8 @@ const SnippetForm: React.FC<SnippetFormProps> = ({ mode = 'create' }) => {
       newErrors.title = 'Title is required';
     }
 
-    if (!formData.code.trim()) {
-      newErrors.code = 'Code is required';
+    if (!formData.content.trim()) {
+      newErrors.content = 'Content is required';
     }
 
     setErrors(newErrors);
@@ -134,8 +133,7 @@ const SnippetForm: React.FC<SnippetFormProps> = ({ mode = 'create' }) => {
             input: {
               title: formData.title.trim(),
               language: formData.language || undefined,
-              code: formData.code.trim(),
-              description: formData.description?.trim() || undefined,
+              content: formData.content.trim(),
             },
           },
         });
@@ -145,8 +143,7 @@ const SnippetForm: React.FC<SnippetFormProps> = ({ mode = 'create' }) => {
             input: {
               title: formData.title.trim(),
               language: formData.language || undefined,
-              code: formData.code.trim(),
-              description: formData.description?.trim() || undefined,
+              content: formData.content.trim(),
             },
           },
         });
@@ -225,36 +222,23 @@ const SnippetForm: React.FC<SnippetFormProps> = ({ mode = 'create' }) => {
         </div>
 
         <div className='form-group'>
-          <label htmlFor='description' className='form-label'>
-            Description
-          </label>
-          <textarea
-            id='description'
-            className='form-textarea'
-            rows={3}
-            value={formData.description}
-            onChange={e => handleChange('description', e.target.value)}
-            placeholder='Brief description of what this snippet does (optional)'
-            disabled={isLoading}
-            style={{ minHeight: '80px' }}
-          />
-        </div>
-
-        <div className='form-group'>
-          <label htmlFor='code' className='form-label'>
-            Code *
-          </label>
-          <textarea
-            id='code'
-            className={`form-textarea ${errors.code ? 'error' : ''}`}
-            rows={15}
-            value={formData.code}
-            onChange={e => handleChange('code', e.target.value)}
-            placeholder='Paste your code snippet here...'
-            disabled={isLoading}
-            style={{ minHeight: '300px' }}
-          />
-          {errors.code && <div className='error'>{errors.code}</div>}
+          <label className='form-label'>Content * (Markdown supported)</label>
+          <div className={`markdown-editor ${errors.content ? 'error' : ''}`}>
+            <MDEditor
+              value={formData.content}
+              onChange={value => handleChange('content', value || '')}
+              preview='live'
+              visibleDragbar={false}
+              height='70vh'
+              data-color-mode='light'
+            />
+          </div>
+          {errors.content && <div className='error'>{errors.content}</div>}
+          <div className='help-text'>
+            Use markdown to format your content. Code blocks support syntax
+            highlighting:
+            <code>```javascript</code>, <code>```python</code>, etc.
+          </div>
         </div>
 
         <div className='form-actions'>

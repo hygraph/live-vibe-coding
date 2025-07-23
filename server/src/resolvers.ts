@@ -4,8 +4,7 @@ interface Snippet {
   id: string;
   title: string;
   language?: string;
-  code: string;
-  description?: string;
+  content: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,15 +21,13 @@ interface Comment {
 interface CreateSnippetInput {
   title: string;
   language?: string;
-  code: string;
-  description?: string;
+  content: string;
 }
 
 interface UpdateSnippetInput {
   title?: string;
   language?: string;
-  code?: string;
-  description?: string;
+  content?: string;
 }
 
 interface CreateCommentInput {
@@ -49,9 +46,9 @@ export const resolvers = {
       const params: any[] = [];
       const conditions: string[] = [];
 
-      // Add search condition (searches in title and code)
+      // Add search condition (searches in title and content)
       if (search) {
-        conditions.push('(title LIKE ? OR code LIKE ?)');
+        conditions.push('(title LIKE ? OR content LIKE ?)');
         params.push(`%${search}%`, `%${search}%`);
       }
 
@@ -101,15 +98,14 @@ export const resolvers = {
     ): Snippet => {
       const now = new Date().toISOString();
       const stmt = db.prepare(`
-        INSERT INTO snippets (title, language, code, description, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO snippets (title, language, content, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?)
       `);
 
       const result = stmt.run(
         input.title,
         input.language || null,
-        input.code,
-        input.description || null,
+        input.content,
         now,
         now
       );
@@ -142,13 +138,9 @@ export const resolvers = {
         updateFields.push('language = ?');
         params.push(input.language);
       }
-      if (input.code !== undefined) {
-        updateFields.push('code = ?');
-        params.push(input.code);
-      }
-      if (input.description !== undefined) {
-        updateFields.push('description = ?');
-        params.push(input.description);
+      if (input.content !== undefined) {
+        updateFields.push('content = ?');
+        params.push(input.content);
       }
 
       if (updateFields.length === 0) {

@@ -1,11 +1,10 @@
 export const typeDefs = `#graphql
-  # Snippet type representing a code snippet
+  # Snippet type representing a code snippet with markdown content
   type Snippet {
     id: ID!
     title: String!
     language: String
-    code: String!
-    description: String
+    content: String!
     createdAt: String!
     updatedAt: String!
     comments: [Comment!]!
@@ -25,15 +24,13 @@ export const typeDefs = `#graphql
   input CreateSnippetInput {
     title: String!
     language: String
-    code: String!
-    description: String
+    content: String!
   }
 
   input UpdateSnippetInput {
     title: String
     language: String
-    code: String
-    description: String
+    content: String
   }
 
   input CreateCommentInput {

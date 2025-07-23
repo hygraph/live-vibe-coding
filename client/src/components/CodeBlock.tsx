@@ -20,6 +20,8 @@ const mapLanguageToHighlighter = (language?: string): string => {
   const languageMap: Record<string, string> = {
     javascript: 'javascript',
     typescript: 'typescript',
+    tsx: 'tsx',
+    jsx: 'jsx',
     python: 'python',
     java: 'java',
     c: 'c',
